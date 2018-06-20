@@ -44,11 +44,12 @@ func (m *MmrtabotModule) backlogCommand(ctx *teletran.CommandContext, args []str
 	writer := bytes.NewBufferString("```")
 	table := tablewriter.NewWriter(writer)
 	table.SetHeader([]string{"Time", "Game", "Category", "Runner"})
+	table.SetAlignment(tablewriter.ALIGN_LEFT)
 	for _, r := range runs {
 		table.Append([]string{
 			r.Duration().String(),
-			r.Game.Name,
-			r.Category,
+			r.Game.AbbrevName(),
+			r.AbbrevCat(),
 			r.User.Name,
 		})
 	}
