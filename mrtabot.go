@@ -49,6 +49,7 @@ func (m *MmrtabotModule) backlogCommand(ctx *teletran.CommandContext, args []str
 		tablewriter.ALIGN_LEFT,
 		tablewriter.ALIGN_LEFT,
 		tablewriter.ALIGN_LEFT})
+	table.SetColWidth(20)
 	for _, r := range runs {
 		table.Append([]string{
 			r.PrettyTime(),
