@@ -3,7 +3,7 @@ package mmrtabot
 import (
 	"bytes"
 	"fmt"
-	"strconv"
+	"sort"
 
 	"github.com/konkers/mmrta"
 	"github.com/konkers/teletran"
@@ -39,12 +39,14 @@ func (m *MmrtabotModule) backlogCommand(ctx *teletran.CommandContext, args []str
 		return
 	}
 
+	sort.Slice(runs, func(i, j int) bool { return runs[i].Id < runs[j].Id })
+
 	writer := bytes.NewBufferString("```")
 	table := tablewriter.NewWriter(writer)
-	table.SetHeader([]string{"Run Id", "Game", "Category", "User"})
+	table.SetHeader([]string{"Time", "Game", "Category", "Runner"})
 	for _, r := range runs {
 		table.Append([]string{
-			strconv.FormatInt(int64(r.Id), 10),
+			r.Duration().String(),
 			r.Game.Name,
 			r.Category,
 			r.User.Name,
