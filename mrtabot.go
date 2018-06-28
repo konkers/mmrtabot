@@ -1,18 +1,19 @@
 package mmrtabot
 
 import (
-	"bytes"
-	"fmt"
-	"sort"
+	"time"
 
+	"github.com/asdine/storm"
 	"github.com/konkers/mmrta"
 	"github.com/konkers/teletran"
-	"github.com/olekukonko/tablewriter"
 )
 
 type MmrtabotModule struct {
 	bot    *teletran.Bot
+	db     storm.Node
 	client *mmrta.Client
+
+	ticker *time.Ticker
 }
 
 func NewMmrtabotModule(bot *teletran.Bot) (*MmrtabotModule, error) {
@@ -24,41 +25,16 @@ func NewMmrtabotModule(bot *teletran.Bot) (*MmrtabotModule, error) {
 
 	module := &MmrtabotModule{
 		bot:    bot,
+		db:     bot.GetDbBucket("mmrta"),
 		client: c,
 	}
 
-	bot.AddCommand("backlog", "Report verification backlock.", module.backlogCommand)
+	bot.AddCommand("backlog", "Report verification backlog.", module.backlogCommand)
+
+	bot.AddAdminCommand("announcements", "Control announcements.", module.announcementsCommand)
+
+	module.ticker = time.NewTicker(1 * time.Minute)
+	go module.tickerHandler()
 
 	return module, nil
-}
-
-func (m *MmrtabotModule) backlogCommand(ctx *teletran.CommandContext, args []string) {
-	runs, err := m.client.GetUnverifiedRuns(true)
-	if err != nil {
-		ctx.SendResponse(fmt.Sprintf("Can't get runs: %s", err.Error()))
-		return
-	}
-
-	sort.Slice(runs, func(i, j int) bool { return runs[i].Id < runs[j].Id })
-
-	writer := bytes.NewBufferString("```")
-	table := tablewriter.NewWriter(writer)
-	table.SetHeader([]string{"Time", "Game", "Category", "Runner"})
-	table.SetColumnAlignment([]int{
-		tablewriter.ALIGN_RIGHT,
-		tablewriter.ALIGN_LEFT,
-		tablewriter.ALIGN_LEFT,
-		tablewriter.ALIGN_LEFT})
-	table.SetColWidth(20)
-	for _, r := range runs {
-		table.Append([]string{
-			r.PrettyTime(),
-			r.Game.AbbrevName(),
-			r.AbbrevCat(),
-			r.User.Name,
-		})
-	}
-	table.Render()
-	ctx.SendResponse(writer.String() + "```")
-
 }
