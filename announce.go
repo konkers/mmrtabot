@@ -35,20 +35,22 @@ func (m *MmrtabotModule) handleAnnounce(t time.Time) {
 	}
 
 	var fetchedBacklog = false
-	var msg = ""
+	var msgs []string
 	for _, config := range configs {
 		if config.Enabled && t.After(config.NextMessage) {
 			if !fetchedBacklog {
 				var err error
-				msg, err = m.backlogMessage()
+				msgs, err = m.backlogMessage()
 				if err != nil {
 					log.Printf("can't get backlog message: %v\n", err)
 					return
 				}
 				fetchedBacklog = true
 			}
-			if msg != "" {
-				m.bot.Session.ChannelMessageSend(config.ChannelID, msg)
+			if msgs != nil {
+				for _, msg := range msgs {
+					m.bot.Session.ChannelMessageSend(config.ChannelID, msg)
+				}
 			} else {
 				c, err := m.bot.Session.Channel(config.ChannelID)
 				if err == nil {
